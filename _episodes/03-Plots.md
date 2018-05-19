@@ -1,0 +1,185 @@
+---
+title: Creating Publication-Quality Graphics with ggplot2
+teaching: 60
+exercises: 20
+questions:
+- "How can I create publication-quality graphics in R?"
+objectives:
+- "To be able to use ggplot2 to generate publication quality graphics."
+- "To apply geometry, aesthetic, and statistics layers to a ggplot plot."
+- "To manipulate the aesthetics of a plot using different colors, shapes, and lines."
+- "To improve data visualization through transforming scales and paneling by group."
+key points:
+- "Use `ggplot2` to create plots."
+- "Think about graphics in layers: aesthetics, geometry, statistics, scale transformation, and grouping."
+source: Rmd
+---
+
+```
+{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("08-")
+gapminder <- read.csv("data/gapminder-FiveYearData.csv", header = TRUE)
+```
+
+Plotting our data is one of the best ways to
+quickly explore it and the various relationships
+between variables.
+
+There are three main plotting systems in R:
+ - [base]: http://www.statmethods.net/graphs/
+ - [lattice]: http://www.statmethods.net/advgraphs/trellis.html
+ - [ggplot2]: http://www.statmethods.net/advgraphs/ggplot2.html
+
+Today we'll be learning about the ggplot2 package, because
+it is the most effective and powerful method of creating publication quality
+graphics.
+
+ggplot2 is built on the grammar of graphics, the idea that any plot can be
+expressed from the same set of components: a **data** set, a
+**coordinate system**, and a set of **geoms**--the visual representation of data
+points.
+
+The key to understanding ggplot2 is thinking about a figure in layers.
+This idea may be familiar to you if you have used image editing programs like Photoshop, Illustrator, or
+Inkscape.
+
+Let's start off with an example, let's look at the relationship between gdp per capita and life expectancy:
+
+```
+{r lifeExp-vs-gdpPercap-scatter, message=FALSE}
+library("ggplot2")
+ggplot(data = gapminder, aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()
+```
+
+So the first thing we do is call the `ggplot` function. This function lets R
+know that we're creating a new plot, and any of the arguments we give the
+`ggplot` function are the *global* options for the plot: they apply to all
+layers on the plot.
+
+We've passed in two arguments to `ggplot`. First, we tell `ggplot` what data we
+want to show on our figure, in this example the gapminder data we read in
+earlier. For the second argument we passed in the `aes` function, which
+tells `ggplot` how variables in the **data** map to *aesthetic* properties of
+the figure, in this case the **x** and **y** locations. Here we told `ggplot` we
+want to plot the "gdpPercap" column of the gapminder data frame on the x-axis, and
+the "lifeExp" column on the y-axis. Notice that we didn't need to explicitly
+pass `aes` these columns (e.g. `x = gapminder[, "gdpPercap"]`), this is because
+`ggplot` is smart enough to know to look in the **data** for that column!
+
+By itself, the call to `ggplot` isn't enough to draw a figure:
+
+```
+{r}
+ggplot(data = gapminder, aes(x = gdpPercap, y = lifeExp))
+```
+
+We need to tell `ggplot` how we want to visually represent the data, which we
+do by adding a new **geom** layer. In our example, we used `geom_point`, which
+tells `ggplot` we want to visually represent the relationship between **x** and
+**y** as a scatterplot of points:
+
+```
+{r lifeExp-vs-gdpPercap-scatter2}
+ggplot(data = gapminder, aes(x = gdpPercap, y = lifeExp)) +
+  geom_point()
+```
+
+Great, now we have our first plot! Lets start with one modification to change the theme of the plot, to make it a little more publishable in standard scientific journals!
+
+```
+{r lifeExp-vs-gdpPercap-scatter2}
+ggplot(data = gapminder, aes(x = gdpPercap, y = lifeExp)) +
+  geom_point() + theme_classic()
+```
+Our plot is displayed in R Studio for now, but we need to save it so that we can keep it when we make our next plot. Replace fileName.pdf with an appropriate (useful and consistent) name.
+
+```
+ggsave("LifeExpectancy_by_GDPperCap.pdf")
+```
+
+> ## Challenge 1
+>
+> Modify the example so that the figure shows how life expectancy has
+> changed over time (and save the file):
+>
+> ```
+{r}
+> ggplot(data = gapminder, aes(x = gdpPercap, y = lifeExp)) + geom_point()
+> ```
+>
+> Hint: the gapminder dataset has a column called "year", which should appear
+> on the x-axis.
+>
+> > ## Solution to challenge 1
+> >
+> > Here is one possible solution:
+> >
+> > ```{r ch1-sol}
+> > ggplot(data = gapminder, aes(x = year, y = lifeExp)) + geom_point()
+> > ggsave("GDPbyYear.pdf")
+> > ```
+> >
+> {: .solution}
+{: .challenge}
+
+
+Using a scatterplot probably isn't the best for visualizing change over time.
+Instead, let's tell `ggplot` to visualize the data as a line plot:
+
+```
+{r lifeExp-line}
+ggplot(data = gapminder, aes(x=year, y=lifeExp, by=country)) +
+  geom_line()
+```
+
+Instead of adding a `geom_point` layer, we've added a `geom_line` layer. We've
+added the **by** *aesthetic*, which tells `ggplot` to draw a line for each
+country.
+
+But what if we want to visualize both lines and points on the plot? We can
+simply add another layer to the plot:
+
+```
+{r lifeExp-line-point}
+ggplot(data = gapminder, aes(x=year, y=lifeExp, by=country, color=continent)) +
+  geom_line() + geom_point()
+```
+
+It's important to note that each layer is drawn on top of the previous layer. To demonstrate, lets add some color, in this example the points are drawn *on top of* the lines.
+
+```
+{r lifeExp-layer-example-1}
+ggplot(data = gapminder, aes(x=year, y=lifeExp, by=country)) +
+  geom_line(aes(color=continent)) + geom_point()
+```
+
+In contrast, in this example, the lines are drawn on top of the points.
+
+```
+{r lifeExp-layer-example-1}
+ggplot(data = gapminder, aes(x=year, y=lifeExp, by=country)) + geom_point() +
+  geom_line(aes(color=continent))
+```
+
+> ## Tip: Setting an aesthetic to a value instead of a mapping
+>
+> So far, we've seen how to use an aesthetic (such as **color**) as a *mapping* to a variable in the data. For example, when we use `geom_line(aes(color=continent))`, ggplot will give a  different color to each continent.
+> - What if we want to change the color of all lines to blue? You may think that `geom_line(aes(color="blue"))` should work, but it doesn't. Since we don't want to create !a mapping to a >specific variable, we simply move the color specification outside of the `aes()` function, like this: `geom_line(color="blue")`. Generally, if it is a *constant* (i.e. it does not change with data) place it outside of the `aes()` function.
+>`ggplot(data = gapminder, aes(x=year, y=lifeExp, by=country)) + geom_line(color="blue")`
+>
+{: .callout}
+
+##More About Selecting Plot Colors
+In the last plot, the color palette were selected by R, this is often a helpful place to start, but rarely what we actually want! We can specify colors using the `scale_colour_manual()` function. Inside the parentheses specify the colors you want. Colors can be specified by their name (e.g. "black", "red", "green" etc.) or with hexadecimal codes. There are several possibilities for selecting colors!
+ - All colors the same: use `color="DesiredColor"` (outside of `aes()``)
+ `ggplot(data = gapminder) +geom_line(aes(x=year, y=lifeExp, by=country), color='darkOliveGreen')`
+
+ - Data points colored differently relative to group assignment (R standard): inside of `aes()` use `color="ColumnName"`
+ `ggplot(data = gapminder) +geom_line(aes(x=year, y=lifeExp, by=country, color=continent))`
+
+ - Data points colored differently relative to group assignment (Manually selected): use `+ scale_colour_manual(values="SelectedColors")` Note: you must provide the same number of colors as number of groups to color
+ `ggplot(data = gapminder) +geom_line(aes(x=year, y=lifeExp,by=country, color=continent)) +scale_colour_manual(values=c('red','green','pink','yellow', 'black'))`
+
+Now, what if we want to highlight values from one Continent, lets say Oceania, by making them black (other points red), and prominently displayed? The last example showed a technique for making one group a different color than the rest, but some points are hidden beneath other data points. To correct this we need to plot the values from Oceania on top of the other points, and we can do this because arguments in ggplot are layered. However we need to learn about **subsetting** data first.
