@@ -1,0 +1,325 @@
+---
+title: Producing Reports With knitr
+teaching: 60
+exercises: 15
+questions:
+- "How can I integrate software and reports?"
+objectives:
+- Value of reproducible reports
+- Basics of Markdown
+- R code chunks
+- Chunk options
+- Inline R code
+- Other output formats
+keypoints:
+- "Mix reporting written in R Markdown with software written in R."
+- "Specify chunk options to control formatting."
+- "Use `knitr` to convert these documents into PDF and other formats."
+source: Rmd
+---
+
+```
+{r chunk_options, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("15-")
+```
+
+
+# Data analysis reports
+
+
+At this point we have created several plots-- each one is it's own file and aside
+from the, hopefully useful, file name we don't have an easy way to relate which data
+set or code was used to make that file. In the next section, we will use knitr to create
+reports that allow integration of code, output and plots.
+
+Data analysts tend to write a lot of reports, describing their
+analyses and results, for their collaborators or to document their
+work for future reference.
+
+
+
+Everything is easier now that I create a web page (as an html
+file). It can be one long stream, so I can use tall figures that
+wouldn't ordinary fit on one page. Scrolling is your friend.
+
+The gold standard of data management in many laboratories is to print a file, hole-punch
+and put it in a 3-ring binder on the shelf. Though not practical for many data sets this
+procedure is durable!
+
+We will use knitr to create reports that conveniently combine code, output (including plots),
+and notes in one document.
+
+## Literate programming
+
+Ideally, such analysis reports are _reproducible_ documents: If an
+error is discovered, or if some additional subjects are added to the
+data, you can just re-compile the report and get the new or corrected
+results (versus having to reconstruct figures, paste them into
+a Word document, and further hand-edit various detailed results).
+
+The key tool for R is [knitr](http://yihui.name/knitr/), which allows
+you to create a document that is a mixture of text and some chunks of
+code. When the document is processed by knitr, chunks of R code will
+be executed, and graphs or other results inserted.
+
+This sort of idea has been called "literate programming".
+
+knitr allows you to mix basically any sort of text with any sort of
+code, but we recommend that you use R Markdown, which mixes Markdown
+with R. Markdown is a light-weight mark-up language for creating web
+pages.
+Think of markdown as a way to convert the ubiquitous nature of text files with more human
+readable formating, such as headings, bold, and italics. Markdown side-steps the hassle
+formatting differences among operating systems or closed source programs. The file that we
+'mark up' will be converted into an HTML file that we can save and read later.
+
+## Creating a R Markdown file
+
+Within R Studio, click File &rarr; New File &rarr; R Markdown and
+you'll get a dialog box like this:
+
+![](../fig/New_R_Markdown.png)
+
+You can stick with the default (HTML output), but lets give it a useful title:
+2018-05_SWC_IntroToR
+Select `ok`
+
+R Studio creates a document with some heading information that we just entered and
+also some example text. Later we will delete the example code and add our own, but for
+now lets go through their example.
+
+## Basic components of R Markdown
+
+To get an idea of what R Markdown does, lets compare the markdown file with the html output.
+To create the html output, click the `Knit` button at the top of the new R markdown file window.
+
+At the top, we can see the information that we added during setup. The formatting here isn't
+very obvious, but for the rest of the document there will be a clear pattern.
+
+```
+---
+title: "Initial R Markdown document"
+author: "Karl Broman"
+date: "April 23, 2015"
+output: html_document
+---
+```
+
+The next bit on the R Markdown file passes some set-up information about how to use R when
+running the programs to generate the output and create plots. For now, lets leave that
+the way it is.
+
+From here, we can see a more close mapping of information that is in the R markdown file to
+what is in the html file.
+
+The first line 'R Markdown' appears large on the html, this is specified by the hash marks
+at the beginning of the line.
+You can make section headers of different sizes by initiating a line
+with some number of `#` symbols:
+
+```
+# Title
+## Main section
+### Sub-section
+#### Sub-sub section
+```
+Next, we have a block of normal-looking text, no additional marks are required for this
+feature. However, portions of this text can be modified to include:
+ - A hyperlink: enclose the url in angle brackets `<example.com>`
+ - Bold: use two pairs of asterisks `**bold**`
+ - Italics: use underscores, like this: `_italics_`.
+ - Bulleted lists can be made by ` - starting the line with a hyphen`e
+ - Additionally code-type font can be made with back ticks
+
+
+
+> ## Challenge
+>
+> Create a new R Markdown document. Delete all of the R code chunks
+> and write a bit of Markdown (some sections, some italicized
+> text, and an itemized list).
+>
+{: .challenge}
+
+
+## A bit more Markdown
+
+You can include an image file like this: `![caption](http://url/for/file)`
+
+You can do subscripts (e.g., H~2~O as in water) with `H~2~O` and superscripts (e.g.,
+2^3^ = 8) with `2^3^`.
+
+## R code chunks
+
+Markdown is interesting and useful, but the real power comes from
+mixing markdown with chunks of R code. This is R Markdown. When
+processed, the R code will be executed; if they produce figures, the
+figures will be inserted in the final document.
+
+The main code chunks look like this:
+
+<pre>
+&#96;&#96;&#96;{r load_data}
+gapminder <- read.csv("~/Desktop/gapminder.csv")
+&#96;&#96;&#96;
+</pre>
+
+That is, you place a chunk of R code between <code>&#96;&#96;&#96;{r chunk_name}</code>
+and <code>&#96;&#96;&#96;</code>. It's a good idea to give each chunk
+a name, as they will help you to fix errors and, if any graphs are
+produced, the file names are based on the name of the code chunk that
+produced them.
+
+> ## Challenge
+>
+> Add code chunks to
+>
+> - Load the ggplot2 package
+> - Read the gapminder data
+> - Create a plot, any plot
+{: .challenge}
+
+## How things get compiled
+
+When you press the "Knit HTML" button, the R Markdown document is
+processed by [knitr](http://yihui.name/knitr) and a plain Markdown
+document is produced (as well as, potentially, a set of figure files): the R code is
+executed
+and replaced by both the input and the output; if figures are
+produced, links to those figures are included.
+
+The Markdown and figure documents are then processed by the tool
+[pandoc](http://pandoc.org/), which converts the Markdown file into an
+html file, with the figures embedded.
+
+```{r rmd_to_html_fig, fig.width=8, fig.height=3, fig.align="left", echo=FALSE}
+par(mar=rep(0, 4), bty="n", cex=1.5)
+plot(0, 0, type="n", xlab="", ylab="", xaxt="n", yaxt="n",
+     xlim=c(0, 100), ylim=c(0, 100))
+xw <- 10
+yh <- 35
+xm <- 12
+ym <- 50
+rect(xm-xw/2, ym-yh/2, xm+xw/2, ym+yh/2, lwd=2)
+text(xm, ym, ".Rmd")
+
+xm <- 50
+ym <- 80
+rect(xm-xw/2, ym-yh/2, xm+xw/2, ym+yh/2, lwd=2)
+text(xm, ym, ".md")
+xm <- 50; ym <- 25
+for(i in c(2, 0, -2))
+    rect(xm-xw/2+i, ym-yh/2+i, xm+xw/2+i, ym+yh/2+i, lwd=2,
+         border="black", col="white")
+text(xm-2, ym-2, "figs/")
+
+xm <- 100-12
+ym <- 50
+rect(xm-xw/2, ym-yh/2, xm+xw/2, ym+yh/2, lwd=2)
+text(xm, ym, ".html")
+
+arrows(22, 50, 38, 50, lwd=2, col="slateblue", len=0.1)
+text((22+38)/2, 60, "knitr", col="darkslateblue", cex=1.3)
+
+arrows(62, 50, 78, 50, lwd=2, col="slateblue", len=0.1)
+text((62+78)/2, 60, "pandoc", col="darkslateblue", cex=1.3)
+```
+
+
+
+
+## Chunk options
+
+There are a variety of options to affect how the code chunks are
+treated.
+
+- Use `echo=FALSE` to avoid having the code itself shown.
+- Use `results="hide"` to avoid having any results printed.
+- Use `eval=FALSE` to have the code shown but not evaluated.
+- Use `warning=FALSE` and `message=FALSE` to hide any warnings or
+  messages produced.
+- Use `fig.height` and `fig.width` to control the size of the figures
+  produced (in inches).
+
+So you might write:
+
+<pre>
+&#96;&#96;&#96;{r load_libraries, echo=FALSE, message=FALSE}
+library("dplyr")
+library("ggplot2")
+&#96;&#96;&#96;
+</pre>
+
+Often there will be particular options that you'll want to use
+repeatedly; for this, you can set _global_ chunk options, like so:
+
+<pre>
+&#96;&#96;&#96;{r global_options, echo=FALSE}
+knitr::opts_chunk$set(fig.path="Figs/", message=FALSE, warning=FALSE,
+                      echo=FALSE, results="hide", fig.width=11)
+&#96;&#96;&#96;
+</pre>
+
+The `fig.path` option defines where the figures will be saved. The `/`
+here is really important; without it, the figures would be saved in
+the standard place but just with names that begin with `Figs`.
+
+If you have multiple R Markdown files in a common directory, you might
+want to use `fig.path` to define separate prefixes for the figure file
+names, like `fig.path="Figs/cleaning-"` and `fig.path="Figs/analysis-"`.
+
+
+
+## Inline R code
+
+You can make _every_ number in your report reproducible. Use
+<code>&#96;r</code> and <code>&#96;</code> for an in-line code chunk,
+like so: <code>&#96;r round(some_value, 2)&#96;</code>. The code will be
+executed and replaced with the _value_ of the result.
+
+Don't let these in-line chunks get split across lines.
+
+Perhaps precede the paragraph with a larger code chunk that does
+calculations and defines things, with `include=FALSE` for that larger
+chunk (which is the same as `echo=FALSE` and `results="hide"`).
+
+## Other output options
+
+You can also convert R Markdown to a PDF or a Word document. Click the
+little triangle next to the "Knit HTML" button to get a drop-down
+menu. Or you could put `pdf_document` or `word_document` in the header
+of the file.
+
+> ## Tip: Creating PDF documents
+>
+> Creating .pdf documents may require installation of some extra software. If
+> required this is detailed in an error message.
+>
+> - [TeX installers for Windows](https://miktex.org/2.9/setup).
+> - [TeX installers for macOS](https://tug.org/mactex).
+{: .callout}
+
+
+> ## Challenge
+>
+> Let's use knitr to make a file describing what we've done so far:
+>  - Load data
+>  - Add a library [ggplot]
+>  - Examine the data structure [str()]
+>  - Create a plot, or several
+{: .challenge}
+
+
+
+
+## Resources
+
+- [Knitr in a knutshell tutorial](http://kbroman.org/knitr_knutshell)
+- [Dynamic Documents with R and knitr](http://www.amazon.com/exec/obidos/ASIN/1482203537/7210-20) (book)
+- [R Markdown documentation](http://rmarkdown.rstudio.com)
+- [R Markdown cheat sheet](http://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf)
+* [Getting started with R Markdown](https://www.rstudio.com/resources/webinars/getting-started-with-r-markdown/)
+* [Reproducible Reporting](https://www.rstudio.com/resources/webinars/reproducible-reporting/)
+* [The Ecosystem of R Markdown](https://www.rstudio.com/resources/webinars/the-ecosystem-of-r-markdown/)
+* [Introducing Bookdown](https://www.rstudio.com/resources/webinars/introducing-bookdown/)

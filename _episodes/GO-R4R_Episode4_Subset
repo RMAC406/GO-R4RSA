@@ -1,0 +1,145 @@
+---
+title: Subsetting Data
+teaching: 35
+exercises: 15
+questions:
+- "How can I work with subsets of data in R?"
+objectives:
+- "To be able to subset vectors, factors, matrices, lists, and data frames"
+- "To be able to extract individual and multiple elements: by index, by name, using comparison operations"
+- "To be able to skip and remove elements from various data structures."
+keypoints:
+- "Indexing in R starts at 1, not 0."
+- "Access individual values by location using `[]`."
+- "Access slices of data using `[low:high]`."
+- "Access arbitrary sets of data using `[c(...)]`."
+- "Use logical operations and logical vectors to access subsets of data."
+source: Rmd
+---
+
+```{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("06-")
+# Silently load in the data so the rest of the lesson works
+gapminder <- read.csv("data/gapminder-FiveYearData.csv", header=TRUE)
+```
+
+
+
+
+# Subsetting Data
+Often we are interested in working with only a part of our data set. R has a few different
+techniques for subseting data, we will look at a few of these methods here.
+1. Use brackets (`[]`) to select rows and columns based on row and column number:
+The first value is the row number, and the second is the column number
+```
+{r}
+gapminder[1,1]
+```
+Note,the values for row and column numbers can be vectors
+```
+{r}
+gapminder[1:5,c(1,3,5)]
+```
+If either value is not specified, all rows/columns will be returned
+```
+{r}
+gapminder[1,]
+```
+2. The names of rows and columns can be specifically called for subsetting as well
+```
+{r}
+ gapminder[gapminder$country=="Australia" & gapminder$year==1952, c("year","lifeExp")]
+```
+3. Subsetting can also be achieved with the `subset()` function, which takes 3 arguments:
+ data frame, row selection and column selection
+
+subset(gapminder, country=="Australia" & year==1952, select = c(year,lifeExp))
+
+4. Functions in 'dplyr' library These are beyond the scope of this workshop, but may be useful.
+
+> ## Challenge 1
+>
+> Use your new 'subsetting' skills to display the life expectancy and GDPperCapita for
+people in Paraguay in 2007
+>
+> ```
+{r, eval=FALSE}
+> ggplot(data = gapminder, aes(x = gdpPercap, y = lifeExp)) + geom_point()
+> ```
+>
+>
+> > ## Solution to challenge 1
+> >
+> > Here are two possible solutions:
+> >
+> > ```
+{r}
+> > gapminder[gapminder$country=='Paraguay' & gapminder$year==2007, c('lifeExp','gdpPercap')]
+> > ```
+> >
+> > ```{r}
+> > subset(gapminder, country=='Paraguay' & year==2007, select = c (lifeExp,gdpPercap))
+> > ```
+> >
+> {: .solution}
+{: .challenge}
+
+### Plotting a subset of data
+To highlight the values from Ocenaia on a plot, we need to plot these on top of the other
+data points. To do this we will plot all of the points in red, and then plot the points
+from Oceana in black on top of the other points.
+
+```
+{r}
+ggplot(data = gapminder) + geom_line(aes(x=year, y=lifeExp, by=country), color="red")
++ geom_line(data = subset(gapminder, continent=="Oceania"), aes(x=year, y=lifeExp,
+ by=country), color="black")
+```
+Key points:
+  - Plots are layered
+  - Individual subsets of data can be plotted
+  - When all data points are to be the same color, the color argument goes outside
+   of the `aes()` function.
+
+## Plot appearance
+Let's take a little time and clean-up the appearance of this plot
+
+First, lets change the theme to standard black and white.
+Add `+ theme_classic()`
+
+Now, lets change the titles of the axes to "Year" and "Life Expectancy"
+Add `+ labs(title= "Oceania on the Rise", x="Year", y="Life Expectancy")`
+
+Let's also change the scale on the Y-axis to 0 - 100: this looks more complicated
+than it is, but the function for altering the y axis takes several arguments:
+  - limits: how far the axis extends
+  - breaks: where the tick marks are
+  - labels: where the labels for the ticks go
+  Note, to specify exactly where the ticks and labels go, use `seq(0,100,10)` to
+  generate a sequence of numbers from 0 to 100, each 10 apart.
+
+`+ scale_y_continuous(limits= c(0,100), breaks = seq(0,100,10), labels= seq(0,100,10))`
+
+Let's also clean up the X-axis, moving the ticks over to the sampling years
+
+`+ scale_x_continuous(breaks = seq(1952,2007,5), labels=seq(1952,2007,5))`
+```
+{r}
+P <- ggplot(data = gapminder) + geom_line(aes(x=year, y=lifeExp, by=country), color="red")
+ + geom_line(data = subset(gapminder, continent=="Oceania"), aes(x=year, y=lifeExp,
+ by=country), color="black")
+P <- P + theme_classic()
+P <- P + labs(title= "Oceania on the Rise", x="Year", y="Life Expectancy")
+P <- P + scale_y_continuous(limits= c(0,100), breaks = seq(0,100,10), labels= seq(0,100,10))
+P <- P + scale_x_continuous(breaks = seq(1952,2007,5), labels=seq(1952,2007,5))
+P
+
+
+
+#Multi Panel Plots
+Sometimes, it is necessary to create a figure with several individual panels, to
+demonstrate, lets plot life expectancy per year for each continent individually.
+We learned in the previous section how to subset the data, so we could pull the
+necessary data for each continent and make a plot for each, and with only 5 continents,
+that's not a terrible project, but let's use a For-loop for automation instead!

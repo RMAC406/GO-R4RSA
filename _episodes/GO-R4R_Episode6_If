@@ -1,0 +1,287 @@
+---
+title: Data Dependent Choices
+teaching: 45
+exercises: 20
+questions:
+- "How can I make data-dependent choices in R?"
+objectives:
+- "Write conditional statements with `if()` and `else()`."
+keypoints:
+- "Use `if` and `else` to make choices."
+
+source: Rmd
+---
+
+```
+{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("07-")
+gapminder <- read.csv("data/gapminder-FiveYearData.csv", header=TRUE)
+
+```
+
+
+# Data-dependent choices
+
+Often when we're coding we want to control the flow of our actions. This can be done
+by setting actions to occur only if a condition or a set of conditions are met.
+Alternatively, we can also set an action to occur a particular number of times.
+
+There are several ways you can control flow in R.
+For conditional statements, the most commonly used approaches are the constructs:
+
+```
+{r, eval=FALSE}
+# if
+if (condition is true) {
+  perform action
+}
+
+# if ... else
+if (condition is true) {
+  perform action
+} else {  # that is, if the condition is false,
+  perform alternative action
+}
+```
+
+Say, for example, that we want R to print a message if a variable `x` has a particular value:
+
+```{r}
+x <- 8
+
+if (x >= 10) {
+  print("x is greater than or equal to 10")
+}
+
+x
+```
+
+The print statement does not appear in the console because x is not greater than 10.
+To print a different message for numbers less than 10, we can add an `else` statement.
+
+```{r}
+x <- 8
+
+if (x >= 10) {
+  print("x is greater than or equal to 10")
+} else {
+  print("x is less than 10")
+}
+```
+
+You can also test multiple conditions by using `else if`.
+
+```{r}
+x <- 8
+
+if (x >= 10) {
+  print("x is greater than or equal to 10")
+} else if (x > 5) {
+  print("x is greater than 5, but less than 10")
+} else {
+  print("x is less than 5")
+}
+```
+
+**Important:** when R evaluates the condition inside `if()` statements, it is
+looking for a logical element, i.e., `TRUE` or `FALSE`. This can cause some
+headaches for beginners. For example:
+
+```{r}
+x  <-  4 == 3
+if (x) {
+  "4 equals 3"
+} else {
+  "4 does not equal 3"
+}
+```
+
+As we can see, the not equal message was printed because the vector x is `FALSE`
+
+```{r}
+x <- 4 == 3
+x
+```
+
+> ## Challenge 1
+>
+> Use an `if()` statement to print a suitable message
+> reporting whether there are any records from 2002 in
+> the `gapminder` dataset.
+> Now do the same for 2012.
+>
+> > ## Solution to Challenge 1
+> > We will first see a solution to Challenge 1 which does not use the `any()` function.
+> > We first obtain a logical vector describing which element of `gapminder$year` is
+equal to `2002`:
+> > ```{r ch10pt1-sol, eval=FALSE}
+> > gapminder[(gapminder$year == 2002),]
+> > ```
+> > Then, we count the number of rows of the data.frame `gapminder` that correspond to
+the 2002:
+> > ```{r ch10pt2-sol, eval=FALSE}
+> > rows2002_number <- nrow(gapminder[(gapminder$year == 2002),])
+> > ```
+> > The presence of any record for the year 2002 is equivalent to the request that
+`rows2002_number` is one or more:
+> > ```{r ch10pt3-sol, eval=FALSE}
+> > rows2002_number >= 1
+> > ```
+> > Putting all together, we obtain:
+> > ```{r ch10pt4-sol, eval=FALSE}
+> > if(nrow(gapminder[(gapminder$year == 2002),]) >= 1){
+> >    print("Record(s) for the year 2002 found.")
+> > }
+> > ```
+> >
+> > All this can be done more quickly with `any()`. The logical condition can be
+expressed as:
+> > ```{r ch10pt5-sol, eval=FALSE}
+> > if(any(gapminder$year == 2002)){
+> >    print("Record(s) for the year 2002 found.")
+> > }
+> > ```
+> >
+> {: .solution}
+{: .challenge}
+
+> ## Tip: `any()` and `all()`
+>
+> The `any()` function will return TRUE if at least one
+> TRUE value is found within a vector, otherwise it will return `FALSE`.
+> This can be used in a similar way to the `%in%` operator.
+> ``` {r}
+> any(gapminder$year == 2002)`
+> ```
+> `TRUE` because at least one value is 2002
+>
+> The function `all()`, as the name suggests, will only return `TRUE` if all values in
+> the vector are `TRUE`.
+> ``` {r}
+> all(gapminder$year == 2002)`
+> ```
+> `FALSE` because not all values are 2002
+>
+{: .callout}
+
+Did anyone get a warning message like this?
+
+```{r, echo=FALSE}
+if (gapminder$year == 2012) {}
+```
+
+If your condition evaluates to a vector with more than one logical element,
+the function `if()` will still run, but will only evaluate the condition in the first
+element. Here you need to make sure your condition is of length 1.
+
+Often, we want to apply an if/else statement to every variable in a list (or value in
+a column of a data frame), so the `if()` and `else()` functions will not work.
+Instead, we will employ the function `ifelse()`, which takes three arguments: the logical
+comparison, what to do if `TRUE` and what to do if `FALSE`
+
+We will use the `ifelse()` function to add a column to the gapminder data that has 6
+continents ("Africa", "Asia", "Europe", "NorthAmerica", "Oceania" "SouthAmerica").
+
+First we need to know which countries in the 'Americas' continent belong to either North
+or South. Here is a list of names of North American countries taken from
+(https://www.countries-ofthe-world.com/countries-of-north-america.html)  .
+
+``` {r}
+NAmerica <- c("Antigua and Barbuda", "Bahamas", "Barbados", "Belize", "Canada",
+"Costa Rica", "Cuba", "Dominica", "Dominican Republic", "El Salvador", "Grenada",
+"Guatemala", "Haiti", "Honduras", "Jamaica", "Mexico", "Nicaragua", "Panama", "Puerto Rico",
+"Saint Kitts and Nevis",  "Saint Lucia", "Saint Vincent and the Grenadines",
+"Trinidad and Tobago", "United States"
+```
+
+Given this list, we can construct a logic flow to create a vector called `Continent6`.
+First, let's search by 'country', and if the country matches any country in `NAmerica`
+we will print "NorthAmerica" in the `Continent6` vector.
+
+Then, for rows that have countries that aren't in `NAmerica`, but do have "Americas" in
+ the `Continent` column, we will print "SouthAmerica" in the `Continent6` vector.
+
+Finally, each row that has "Africa", "Asia", "Europe", or "Oceania" in the continent column,
+ we will print that in the 'Continent6' vector
+
+```{r}
+Continent6<- ifelse(gapminder$country %in% NAmerica, "NorthAmerica",
+ifelse(as.character(gapminder$continent) %in% "Americas", "SouthAmerica",
+ifelse(gapminder$continent %in% c("Africa", "Asia", "Europe", "Oceania"),
+paste(gapminder$continent), " ")))
+```
+
+> ## Tip: `==` vs. `%in%`
+>
+> Both `==` vs. `%in%` are comparators for identifying values when one object matches
+another, however, use `==` only when searching for a unique value. If however, you want
+all values that match to a list, use `%in%`.
+>
+{: .callout}
+
+
+Now to use this new vector for plotting and other analysis, we need to add it as a
+column to the gapminder data frame.
+Let's make a new data frame called gapminder_6 with the addition of a Continent_6
+column, to do this we need the `cbind()` function which combines columns
+```{r}
+gapminder_6 <- cbind(gapminder,Continent6)
+str(gapminder_6)
+
+```
+
+Now we can use the loop we created before to plot the data in 6 panels, just change
+the name of a few variables:
+
+```{r}
+
+plot6<-list()
+for (i in unique(gapminder_6$Continent6)) {
+  data1 <-subset(gapminder_6, Continent6==i)
+  plot6[[i]]<- ggplot(data = data1) + geom_line(aes_string(x='year', y='lifeExp',
+    by='country'), color="red")
+  plot6[[i]]<-  plot6[[i]]+ labs(title= i, x="Year", y="Life Expectancy")
+  plot6[[i]]<-  plot6[[i]]+ theme_classic() + labs(title= i, x="Year", y="Life Expectancy")
+  plot6[[i]]<-  plot6[[i]]+ scale_y_continuous(limits= c(0,100), breaks= seq(0,100,10),
+    labels= seq(0,100,10))
+  plot6[[i]]<- plot6[[i]]+ scale_x_continuous(breaks = seq(1952,2007,10),
+    labels=seq(1952,2007,10))
+}
+
+To create the plot, use `grid.arrange` as before:
+```{r}
+grid.arrange(grobs=plot6, nrow=3, top= "Life Expectancy per Continent over Time")
+```
+As before, to save the plot:
+plot6_grob<- arrangeGrob(grobs=plot6, nrow=3, top= "Life Expectancy per Continent over Time")
+ggsave("filename.png", plot6_grob)
+
+
+
+Now that we have a new data frame, let's save it, or 'write it out'. This will allow us to examine the file outside of the R environment, and allow us to pull up these calculations without having to rerun the code next time.
+
+
+---
+title: Writing Data
+teaching: 10
+exercises: 10
+questions:
+- "How can I save plots and data created in R?"
+objectives:
+- "To be able to write out plots and data from R."
+keypoints:
+- "Save plots from RStudio using the 'Export' button."
+- "Use `write.table` to save tabular data."
+source: Rmd
+---
+
+```
+{r, include=FALSE}
+source("../bin/chunk-options.R")
+knitr_fig_path("11-")library("ggplot2")
+gapminder <- read.csv("data/gapminder-FiveYearData.csv", header=
+TRUE)
+
+dir.create("cleaned-data")
+```
